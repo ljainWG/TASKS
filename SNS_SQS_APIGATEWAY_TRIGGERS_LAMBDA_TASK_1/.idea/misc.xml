@@ -3,4 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (SNS_SQS_APIGATEWAY_TRIGGERS_LAMBDA_TASK_1)" />
   </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (SNS_SQS_APIGATEWAY_TRIGGERS_LAMBDA_TASK_1)" project-jdk-type="Python SDK" />
 </project>
