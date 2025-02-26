@@ -1,0 +1,9 @@
+Statement:
+we have a lambda function which can be invoked by a sqs, sns, or api gateway (they are triggers of lambda)
+what we have to do is : we have to write code for lambda handler function,
+which display or returns or logs the data related to event like who has trigger the lambda,
+that service name, that particular sqs or sns or gateway name, what was the data it was carring,
+what was the time of invokecation, etc related data to it so that,
+we can see those logs and understand what was happen
+while writting code we also have to think of scenerio what if we add one more trigger to this lambda in future,
+then it should be handled without modification
