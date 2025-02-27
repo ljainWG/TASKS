@@ -1,0 +1,46 @@
+"""
+def lambda_handler(event, context):
+    invocation_time = datetime.datetime.utcnow().isoformat()
+    event_source = "Unknown"
+
+    if "httpMethod" in event:
+        event_source = "API Gateway"
+        source_details = {
+            "httpMethod": event["httpMethod"],
+            "path": event.get("path", "N/A"),
+            "queryStringParameters": event.get("queryStringParameters", {}),
+            "headers": event.get("headers", {}),
+            "body": event.get("body", "N/A")
+        }
+
+    elif "Records" in event and "eventSource" in event["Records"][0] and event["Records"][0]["eventSource"] == "aws:sqs":
+        event_source = "SQS"
+        source_details = {
+            "messageId": event["Records"][0]["messageId"],
+            "body": event["Records"][0]["body"]
+        }
+
+    elif "Records" in event and "Sns" in event["Records"][0]:
+        event_source = "SNS"
+        source_details = {
+            "messageId": event["Records"][0]["Sns"]["MessageId"],
+            "subject": event["Records"][0]["Sns"].get("Subject", "N/A"),
+            "message": event["Records"][0]["Sns"]["Message"]
+        }
+
+    else:
+        source_details = {"message": "Unknown event format"}
+
+    log_details = {
+        "invocation_time": invocation_time,
+        "event_source": event_source,
+        "source_details": source_details
+    }
+
+    print(json.dumps(log_details, indent=2))  # Logging the information
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps({"message": "Lambda executed successfully", "event_source": event_source}),
+    }
+    """

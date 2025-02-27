@@ -1,0 +1,33 @@
+def get_event_source(event):
+    event_sources = {
+        "httpMethod": "API Gateway",
+        "aws:sqs": "SQS",
+        "aws:sns": "SNS"
+    }
+
+    if "httpMethod" in event:
+        return "API Gateway"
+
+    # Iterate over Records to find the correct source type
+    for record in event.get("Records", []):
+        event_source = record.get("eventSource") or record.get("EventSource")
+        if event_source in event_sources:
+            return event_sources[event_source]
+
+    return "Unknown"
+
+
+def get_event_details(event, event_source):
+    event_handlers = {
+        "API Gateway": get_api_gateway_details,
+        "SNS": get_sns_details,
+        "SQS": get_sqs_details,
+        "Unknown": get_unknown_details
+    }
+
+    handler = event_handlers.get(event_source)
+
+    if handler:
+        return handler(event)
+    else:
+        raise Exception("Something unexpected happened")
