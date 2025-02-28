@@ -1,6 +1,7 @@
 import datetime
 from functools import singledispatch
 import json
+import traceback
 
 class APIGatewayProxy:
     def __init__(self, event):
@@ -36,9 +37,9 @@ class SNS:
     #         "message": self.event["Records"][0]["Sns"]["Message"]
     #     }
 
-class UnknownService:
-    def __init__(self, event):
-        self.event = event
+# class UnknownService:
+#     def __init__(self, event):
+#         self.event = event
 
     # def gather_event_details(self):
     #     return {"message": "Unknown Service",
@@ -50,7 +51,7 @@ class CustomSignature:
 
 @singledispatch
 def get_event_details(eventObject):
-    return {"message": "Unknown Service",
+    return {"message": "Custom API Gateway Service",
                 "event_details" : f"{eventObject.event}"}
 
 
@@ -82,6 +83,12 @@ def _(eventObject):
         "message": eventObject.event["Records"][0]["Sns"]["Message"]
     }
 
+# def extract_message_json(event):
+#     message_str = event.get("message", "")
+#     if message_str.startswith("LAMBDA EVENT: "):
+#         message_str = message_str[len("LAMBDA EVENT: "):]
+#     return json.loads(message_str)
+
 def extract_message_json(event):
     try:
         message_str = event.get("message", "")
@@ -94,17 +101,23 @@ def extract_message_json(event):
 def eventMapper(event):
 
     parsed_message = extract_message_json(event)
+    try:
+        if "httpMethod" in event:
+            return APIGatewayProxy(event)
+        elif event.get("Records", [{}])[0].get("eventSource") == "aws:sqs":
+            return SQS(event)
+        elif event.get("Records", [{}])[0].get("EventSource") == "aws:sns":
+            return SNS(event)
+        elif parsed_message and "httpMethod" in parsed_message:
+            return CustomSignature(event)
+        else:
+            # unknown service
+            # return UnknownService(event)
+            raise Exception("Invocation through Unknown Service")
+    except Exception as e:
+        error_message = traceback.format_exc()
+        print("Error occurred:\n", error_message)
 
-    if "httpMethod" in event:
-        return APIGatewayProxy(event)
-    elif event.get("Records", [{}])[0].get("eventSource") == "aws:sqs":
-        return SQS(event)
-    elif event.get("Records", [{}])[0].get("EventSource") == "aws:sns":
-        return SNS(event)
-    elif parsed_message and "httpMethod" in parsed_message:
-        return CustomSignature(event)
-    else:
-        return UnknownService(event)
 
 def lambda_handler(event, context):
     invocation_time = datetime.datetime.utcnow().isoformat()
@@ -118,9 +131,9 @@ def lambda_handler(event, context):
         "event_details": eventDetails
     }
 
-    print("Hello")
-    print(response)
-    print("World")
+    # print("Hello")
+    # print(response)
+    # print("World")
 
     return {
         "statusCode": 200,
