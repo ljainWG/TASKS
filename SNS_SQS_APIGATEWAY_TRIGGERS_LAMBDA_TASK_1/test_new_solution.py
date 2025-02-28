@@ -46,15 +46,25 @@ class MyTestCase(unittest.TestCase):
         # expectedResult = APIGatewayProxy(event)
         self.assertIsInstance(actualResult, CustomSignature )
 
+    # def test_eventMapper_for_UnknownService_raising_exception(self):
+    #     event = {
+    #
+    #     }
+    #     # actualResult = eventMapper(event)
+    #     # expectedResult = APIGatewayProxy(event)
+    #     # self.assertIsInstance(actualResult, UnknownService)
+    #     with self.assertRaises(Exception):
+    #         eventMapper(event)
+
     def test_eventMapper_for_UnknownService(self):
         event = {
 
         }
-        # actualResult = eventMapper(event)
-        # expectedResult = APIGatewayProxy(event)
-        # self.assertIsInstance(actualResult, UnknownService)
-        with self.assertRaises(Exception):
-            eventMapper(event)
+        actualResult = eventMapper(event)
+        expectedResult = None
+        self.assertEqual(expectedResult, actualResult)
+        # with self.assertRaises(Exception):
+        #     eventMapper(event)
 
     def test_extract_message_json_fun_with_valid_CustomSignature(self):
         event = {

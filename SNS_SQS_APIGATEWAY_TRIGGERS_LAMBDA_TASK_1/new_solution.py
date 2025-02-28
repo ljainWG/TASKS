@@ -101,29 +101,32 @@ def extract_message_json(event):
 def eventMapper(event):
 
     parsed_message = extract_message_json(event)
-    try:
-        if "httpMethod" in event:
-            return APIGatewayProxy(event)
-        elif event.get("Records", [{}])[0].get("eventSource") == "aws:sqs":
-            return SQS(event)
-        elif event.get("Records", [{}])[0].get("EventSource") == "aws:sns":
-            return SNS(event)
-        elif parsed_message and "httpMethod" in parsed_message:
-            return CustomSignature(event)
-        else:
-            # unknown service
-            # return UnknownService(event)
-            raise Exception("Invocation through Unknown Service")
-    except Exception as e:
-        error_message = traceback.format_exc()
-        print("Error occurred:\n", error_message)
-
+    if "httpMethod" in event:
+        return APIGatewayProxy(event)
+    elif event.get("Records", [{}])[0].get("eventSource") == "aws:sqs":
+        return SQS(event)
+    elif event.get("Records", [{}])[0].get("EventSource") == "aws:sns":
+        return SNS(event)
+    elif parsed_message and "httpMethod" in parsed_message:
+        return CustomSignature(event)
+    else:
+        # unknown service
+        # return UnknownService(event)
+        raise Exception("Invocation through Unknown Service")
 
 def lambda_handler(event, context):
     invocation_time = datetime.datetime.utcnow().isoformat()
 
-    eventObject = eventMapper(event)
-    eventDetails = get_event_details(eventObject)
+    try:
+        eventObject = eventMapper(event)
+        eventDetails = get_event_details(eventObject)
+    except Exception as e :
+        error_message = traceback.format_exc()
+        # print("Error occurred:\n", error_message)
+        return {
+        "statusCode": 400,
+        "error": error_message
+    }
 
     response = {
         "invocation_time": invocation_time,
