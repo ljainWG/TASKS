@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import patch
-
-from new_solution import eventMapper, get_event_details, extract_message_json, lambda_handler,\
+from src.new_solution import eventMapper, get_event_details, extract_message_json, lambda_handler,\
     APIGatewayProxy, SQS, SNS, CustomSignature
 import json
 import datetime
@@ -60,15 +59,13 @@ class MyTestCase(unittest.TestCase):
         event = {
 
         }
-        actualResult = eventMapper(event)
-        expectedResult = None
-        self.assertEqual(expectedResult, actualResult)
-        # with self.assertRaises(Exception):
-        #     eventMapper(event)
+
+        with self.assertRaises(Exception):
+            eventMapper(event)
 
     def test_extract_message_json_fun_with_valid_CustomSignature(self):
         event = {
-            "message": "{ \"httpMethod\": \"POST\" }"
+            "message": "LAMBDA EVENT: { \"httpMethod\": \"POST\" }"
         }
         actualResult = extract_message_json(event)
         expectedResult = {
@@ -154,9 +151,9 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(expectedResult, actualResult )
 
 
-    @patch("new_solution.datetime")
-    @patch("new_solution.eventMapper")
-    @patch("new_solution.get_event_details")
+    @patch("src.new_solution.datetime")
+    @patch("src.new_solution.eventMapper")
+    @patch("src.new_solution.get_event_details")
     def test_lambda_handler_for_APIGatewayProxy(self, mock_get_event_details, mock_event_mapper, mock_datetime):
         event = {"httpMethod": "POST"}
         context = {}
@@ -173,9 +170,9 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(expected_result, actual_result)
 
-    @patch("new_solution.datetime")
-    @patch("new_solution.eventMapper")
-    @patch("new_solution.get_event_details")
+    @patch("src.new_solution.datetime")
+    @patch("src.new_solution.eventMapper")
+    @patch("src.new_solution.get_event_details")
     def test_lambda_handler_for_SQS(self, mock_get_event_details, mock_event_mapper, mock_datetime):
         event = {
             "Records": [{"eventSource": "aws:sqs", "messageId": "1234567890", "body": "qwertyuiop"}]
@@ -194,9 +191,9 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(expected_result, actual_result)
 
-    @patch("new_solution.datetime")
-    @patch("new_solution.eventMapper")
-    @patch("new_solution.get_event_details")
+    @patch("src.new_solution.datetime")
+    @patch("src.new_solution.eventMapper")
+    @patch("src.new_solution.get_event_details")
     def test_lambda_handler_for_SNS(self, mock_get_event_details, mock_event_mapper, mock_datetime):
         event = {
             "Records": [{"EventSource": "aws:sns", "Sns": {"MessageId": "1234567890", "Message": "asdfghjkl"}}]
@@ -215,9 +212,9 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(expected_result, actual_result)
 
-    @patch("new_solution.datetime")
-    @patch("new_solution.eventMapper")
-    @patch("new_solution.get_event_details")
+    @patch("src.new_solution.datetime")
+    @patch("src.new_solution.eventMapper")
+    @patch("src.new_solution.get_event_details")
     def test_lambda_handler_for_CustomSignature(self, mock_get_event_details, mock_event_mapper, mock_datetime):
         event = {"message": '{ "httpMethod": "POST" }'}
         context = {}
@@ -234,17 +231,20 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(expected_result, actual_result)
 
-    @patch("new_solution.eventMapper")
-    def test_lambda_handler_for_UnknownService(self, mock_event_mapper):
+    @patch("src.new_solution.datetime")
+    @patch("src.new_solution.traceback.format_exc")
+    def test_lambda_handler_for_UnknownService(self, mock_traceback, mock_datetime):
         event = {}
         context = {}
+        mock_datetime.datetime.utcnow.return_value.isoformat.return_value = "2025-02-28T12:00:00Z"
 
-        mock_event_mapper.side_effect = Exception("Invocation through Unknown Service")
+        mock_traceback.return_value = "Invocation through Unknown Service"
 
-        with self.assertRaises(Exception) as context_exception:
-            lambda_handler(event, context)
+        response = lambda_handler(event, context)
 
-        self.assertEqual(str(context_exception.exception), "Invocation through Unknown Service")
+        self.assertEqual(response["statusCode"], 400)
+        self.assertIn("error", response)
+        self.assertEqual(response["error"], "Invocation through Unknown Service")
 
 
 if __name__ == '__main__':
